@@ -32,6 +32,7 @@ app.post("/participantes", async (req, res)=>{
     }
     const participanteSchema = Joi.object({
         name: Joi.string().required(),
+        lastStatus: Joi.any()
     })
     const validation = participanteSchema.validate(newParticipante, {abortEarly: false});
     if(validation.error){
@@ -51,7 +52,7 @@ app.post("/participantes", async (req, res)=>{
             time: time
         }
         await db.collections("messages").insertOne(message)
-        res.send(201)
+        res.sendStatus(201)
     }catch(err){
         res.status(500).send(err.message)
     }
@@ -62,6 +63,36 @@ app.get("/participantes", async (req, res)=>{
         const participantes = await db.collections("participants").find().toArray()
         res.send(participantes)
     }catch(err){
+        res.status(500).send(err.message)
+    }
+})
+
+app.post("/messages", async (req, res)=>{
+    const {to, text, type} = req.body
+    const user = req.header.user
+    const messageSchema = Joi.object({
+        to: Joi.string().required(),
+        text: Joi.string().required(),
+        type: Joi.any().valid("message", "private_message"),
+    })
+    const validation = messageSchema.validate(req.body, {abortEarly: false})
+    if(validation.error){
+        err = validation.error.details.map((detail)=> detail.message)
+        return res.status(422).send(err)
+    }
+    try {
+        const userValidation = await db.collections("participants").findOne({name: user})
+        if(!userValidation) return res.status(404).send("Usuario invalido")
+        const newMessage = {
+            to,
+            text,
+            type,
+            from: user,
+            time: dayjs().format("HH:mm:ss")
+        }
+        await db.collections("messages").insertOne(newMessage)
+        res.sendStatus(201)
+    } catch (err) {
         res.status(500).send(err.message)
     }
 })
