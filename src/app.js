@@ -53,7 +53,16 @@ app.post("/participantes", async (req, res)=>{
         await db.collections("messages").insertOne(message)
         res.send(201)
     }catch(err){
-        res.status(500).send(err)
+        res.status(500).send(err.message)
+    }
+})
+
+app.get("/participantes", async (req, res)=>{
+    try{
+        const participantes = await db.collections("participants").find().toArray()
+        res.send(participantes)
+    }catch(err){
+        res.status(500).send(err.message)
     }
 })
 
