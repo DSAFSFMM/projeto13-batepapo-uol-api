@@ -116,6 +116,19 @@ app.get("/messages", async (req, res)=>{
     }
 })
 
+app.post("/status", async (req,res)=>{
+    const user = req.header.user
+    if(!user) return res.sendStatus(404)
+    try{
+        const participante = await db.collections("participants").findOne({name: user})
+        if(!participante) return res.sendStatus(404)
+        await db.collections("participants").updateOne({name: user}, {$set: {lastStatus: dayjs().format("HH:mm:ss")}})
+        res.send()
+    }catch(err){
+        return res.status(500).send(err.message)
+    }
+})
+
 // conectando o servidor     
 
 app.listen(PORT, ()=> console.log(`O servidor está rodando na porta: ${PORT}`))
