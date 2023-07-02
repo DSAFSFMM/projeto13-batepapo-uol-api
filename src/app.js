@@ -40,9 +40,9 @@ app.post("/participantes", async (req, res)=>{
         return res.status(422).send(erros)
     }
     try{
-        const participante = await db.collections("participants").findOne({name: name})
+        const participante = await db.collection("participants").findOne({name: name})
         if(participante) return res.status(409).send("Este nome já está em uso")
-        await db.collections("participants").insertOne(newParticipante)
+        await db.collection("participants").insertOne(newParticipante)
         const time = dayjs(newParticipante.lastStatus).format("HH:mm:ss")
         const message = {
             from: name,
@@ -51,7 +51,7 @@ app.post("/participantes", async (req, res)=>{
             type: "status",
             time: time
         }
-        await db.collections("messages").insertOne(message)
+        await db.collection("messages").insertOne(message)
         res.sendStatus(201)
     }catch(err){
         res.status(500).send(err.message)
@@ -60,7 +60,7 @@ app.post("/participantes", async (req, res)=>{
 
 app.get("/participantes", async (req, res)=>{
     try{
-        const participantes = await db.collections("participants").find().toArray()
+        const participantes = await db.collection("participants").find().toArray()
         res.send(participantes)
     }catch(err){
         res.status(500).send(err.message)
@@ -81,7 +81,7 @@ app.post("/messages", async (req, res)=>{
         return res.status(422).send(err)
     }
     try {
-        const userValidation = await db.collections("participants").findOne({name: user})
+        const userValidation = await db.collection("participants").findOne({name: user})
         if(!userValidation) return res.status(404).send("Usuario invalido")
         const newMessage = {
             to,
@@ -90,7 +90,7 @@ app.post("/messages", async (req, res)=>{
             from: user,
             time: dayjs().format("HH:mm:ss")
         }
-        await db.collections("messages").insertOne(newMessage)
+        await db.collection("messages").insertOne(newMessage)
         res.sendStatus(201)
     } catch (err) {
         res.status(500).send(err.message)
@@ -106,7 +106,7 @@ app.get("/messages", async (req, res)=>{
         return res.status(422).send("limite inválido")
     }
     try {
-        const messages = await db.collections("messages").find({ $or: [{to: "Todos"}, {to: user}, {from: user}]}).toArray()
+        const messages = await db.collection("messages").find({ $or: [{to: "Todos"}, {to: user}, {from: user}]}).toArray()
         if(req.query.limit){
             return res.send(messages.slice(-limit).reverse())
         }
@@ -120,14 +120,24 @@ app.post("/status", async (req,res)=>{
     const user = req.header.user
     if(!user) return res.sendStatus(404)
     try{
-        const participante = await db.collections("participants").findOne({name: user})
+        const participante = await db.collection("participants").findOne({name: user})
         if(!participante) return res.sendStatus(404)
-        await db.collections("participants").updateOne({name: user}, {$set: {lastStatus: dayjs().format("HH:mm:ss")}})
+        await db.collection("participants").updateOne({name: user}, {$set: {lastStatus: Date.now()}})
         res.send()
     }catch(err){
         return res.status(500).send(err.message)
     }
 })
+
+// remocao automatica
+
+setInterval(async()=>{
+    try{
+        await db.collection("participants").deleteMany({lastStatus: {$lt: (Date.now - 10000)}})
+    }catch(err){
+        console.log(err.message)
+    }
+}, 15000)
 
 // conectando o servidor     
 
