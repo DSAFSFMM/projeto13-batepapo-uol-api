@@ -97,6 +97,25 @@ app.post("/messages", async (req, res)=>{
     }
 })
 
+
+// mongodb://localhost:5000/messages?limit=100
+app.get("/messages", async (req, res)=>{
+    const limit = Number(req.query.limit)
+    const user = req.header.user
+    if(req.query.limit && (isNaN(limit) || limit < 1)){
+        return res.status(422).send("limite inválido")
+    }
+    try {
+        const messages = await db.collections("messages").find({ $or: [{to: "Todos"}, {to: user}, {from: user}]}).toArray()
+        if(req.query.limit){
+            return res.send(messages.slice(-limit).reverse())
+        }
+        req.send(messages)
+    } catch (err) {
+        res.status(500).send(err.message)
+    }
+})
+
 // conectando o servidor     
 
 app.listen(PORT, ()=> console.log(`O servidor está rodando na porta: ${PORT}`))
