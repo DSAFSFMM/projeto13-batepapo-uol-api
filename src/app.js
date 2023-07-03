@@ -69,7 +69,8 @@ app.get("/participants", async (req, res)=>{
 
 app.post("/messages", async (req, res)=>{
     const {to, text, type} = req.body
-    const user = req.header.user
+    const user = req.headers.user
+    console.log(user)
     const messageSchema = Joi.object({
         to: Joi.string().required(),
         text: Joi.string().required(),
@@ -101,7 +102,7 @@ app.post("/messages", async (req, res)=>{
 // mongodb://localhost:5000/messages?limit=100
 app.get("/messages", async (req, res)=>{
     const limit = Number(req.query.limit)
-    const user = req.header.user
+    const user = req.headers.user
     if(req.query.limit && (isNaN(limit) || limit < 1)){
         return res.status(422).send("limite inválido")
     }
@@ -110,14 +111,14 @@ app.get("/messages", async (req, res)=>{
         if(req.query.limit){
             return res.send(messages.slice(-limit).reverse())
         }
-        req.send(messages)
+        res.send(messages)
     } catch (err) {
         res.status(500).send(err.message)
     }
 })
 
 app.post("/status", async (req,res)=>{
-    const user = req.header.user
+    const user = req.headers.user
     if(!user) return res.sendStatus(404)
     try{
         const participante = await db.collection("participants").findOne({name: user})
@@ -131,13 +132,13 @@ app.post("/status", async (req,res)=>{
 
 // remocao automatica
 
-/*setInterval(async()=>{
+setInterval(async()=>{
     try{
         await db.collection("participants").deleteMany({lastStatus: {$lt: (Date.now - 10000)}})
     }catch(err){
         console.log(err.message)
     }
-}, 15000)*/
+}, 15000)
 
 // conectando o servidor     
 
