@@ -70,20 +70,19 @@ app.get("/participants", async (req, res)=>{
 app.post("/messages", async (req, res)=>{
     const {to, text, type} = req.body
     const user = req.headers.user
-    console.log(user)
     const messageSchema = Joi.object({
         to: Joi.string().required(),
         text: Joi.string().required(),
-        type: Joi.any().valid("message", "private_message"),
+        type: Joi.any().valid("message", "private_message").required(),
     })
-    const validation = messageSchema.validate(req.body, {abortEarly: false})
+    const validation = messageSchema.validate({to, text, type}, {abortEarly: false})
     if(validation.error){
-        err = validation.error.details.map((detail)=> detail.message)
+        const err = validation.error.details.map((detail)=> detail.message)
         return res.status(422).send(err)
     }
     try {
         const userValidation = await db.collection("participants").findOne({name: user})
-        if(!userValidation) return res.status(404).send("Usuario invalido")
+        if(!userValidation) return res.status(422).send("Usuario invalido")
         const newMessage = {
             to,
             text,
