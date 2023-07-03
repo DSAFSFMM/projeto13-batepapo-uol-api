@@ -133,7 +133,23 @@ app.post("/status", async (req,res)=>{
 
 setInterval(async()=>{
     try{
-        await db.collection("participants").deleteMany({lastStatus: {$lt: (Date.now - 10000)}})
+        const tempoLimite = Date.now() - 10000
+        const inativos = await db.collection("participants").find({lastStatus: {$lt: tempoLimite}}).toArray()
+        await db.collection("participants").deleteMany({lastStatus: {$lt: tempoLimite}})
+        inativos.forEach(async(user) => {
+            const message = {
+            from: user.name,
+            to: "Todos",
+            text: "sai da sala...",
+            type: "status",
+            time: dayjs().format("HH:mm:ss")
+            }
+            try{
+                await db.collection("messages").insertOne(message)
+            }catch(err){
+                console.log(err.message)
+            }
+        })
     }catch(err){
         console.log(err.message)
     }
