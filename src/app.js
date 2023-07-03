@@ -24,7 +24,7 @@ mongoClient.connect()
 
 // endpoints
 
-app.post("/participantes", async (req, res)=>{
+app.post("/participants", async (req, res)=>{
     const { name } = req.body
     const newParticipante = {
         name,
@@ -58,7 +58,7 @@ app.post("/participantes", async (req, res)=>{
     }
 })
 
-app.get("/participantes", async (req, res)=>{
+app.get("/participants", async (req, res)=>{
     try{
         const participantes = await db.collection("participants").find().toArray()
         res.send(participantes)
@@ -131,13 +131,13 @@ app.post("/status", async (req,res)=>{
 
 // remocao automatica
 
-setInterval(async()=>{
+/*setInterval(async()=>{
     try{
         await db.collection("participants").deleteMany({lastStatus: {$lt: (Date.now - 10000)}})
     }catch(err){
         console.log(err.message)
     }
-}, 15000)
+}, 15000)*/
 
 // conectando o servidor     
 
